@@ -1,4 +1,4 @@
-name: wiki-private
+name: wiki-public
 
 services:
 
@@ -7,7 +7,7 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: wiki-private-db
+    container_name: wiki-public-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DATABASE}
@@ -16,7 +16,7 @@ services:
     #  driver: "none"
     restart: always
     volumes:
-      - wikijs-private-db:/var/lib/postgresql/data
+      - wikijs-public-db:/var/lib/postgresql/data
     # -------------------------------------------------------------------------------
     # Uncomment this section to expose mysql to connections outside of the container
     # such as MySQL Workbench
@@ -26,7 +26,7 @@ services:
 
   app:
     image: ghcr.io/requarks/wiki:${WIKIJS_VERSION_TAG}
-    container_name: wiki-private-app
+    container_name: wiki-public-app
     depends_on:
       - db
     environment:
@@ -40,10 +40,10 @@ services:
     ports:
       - "${WIKIJS_EXTERNAL_PORT}:3000"
     volumes:
-      - wikijs-private-content:/wiki/data/content
+      - wikijs-public-content:/wiki/data/content
 
 volumes:
-  wikijs-private-db:
-    name: wikijs-private-db
-  wikijs-private-content:
-    name: wikijs-private-content
+  wikijs-public-db:
+    name: wikijs-public-db
+  wikijs-public-content:
+    name: wikijs-public-content
