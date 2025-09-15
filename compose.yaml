@@ -1,0 +1,60 @@
+name: tyzen9-wiki
+
+services:
+
+  # *****************************************************************************
+  # wikijs
+  #   Wiki.js is a modern, powerful, and extensible wiki platform built on Node.js.
+  #   It allows collaborative documentation, supports Markdown and rich text editing, 
+  #   and integrates with various authentication methods and databases. Wiki.js 
+  #   can run behind a reverse proxy for secure access, supports SSL/TLS, and is 
+  #   highly customizable with themes, modules, and integrations. Typically, it uses
+  #   a dedicated database service (PostgreSQL) and exposes a web port for user access.
+  #
+  # *****************************************************************************
+  wikijs:
+    image: ghcr.io/requarks/wiki:${WIKIJS_VERSION_TAG}
+    container_name: wikijs
+    depends_on:
+      - postgres
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASS: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DATABASE}
+    restart: unless-stopped
+    ports:
+      - "${WIKIJS_EXTERNAL_PORT}:3000"
+
+  # *****************************************************************************
+  # postgres
+  #   PostgreSQL is a robust, open-source relational database system. For Wiki.js, 
+  #   it stores all the wiki content, user data, and configuration. PostgreSQL 
+  #   provides reliability, data integrity, and performance for concurrent access. 
+  #   When used with Wiki.js, it typically requires a dedicated database, user, 
+  #   and password, which Wiki.js will use to connect. Volumes are recommended to 
+  #   persist data across container restarts or upgrades.
+  #
+  # *****************************************************************************
+  postgres:
+    image: postgres:${POSTGRES_VERSION_TAG}
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    # -------------------------------------------------------------------------------
+    # Uncomment this section to expose mysql to connections outside of the container
+    # such as MySQL Workbench
+    # -------------------------------------------------------------------------------
+    # ports:
+    #  - ${POSTGRES_EXTERNAL_PORT}:5432
+
+
+volumes:
+  postgres:
