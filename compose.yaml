@@ -25,6 +25,8 @@ services:
       DB_PASS: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DATABASE}
     restart: unless-stopped
+    volumes:
+      - content:/wiki/data/content
     ports:
       - "${WIKIJS_EXTERNAL_PORT}:3000"
 
@@ -57,4 +59,5 @@ services:
 
 
 volumes:
+  content:
   postgres:
