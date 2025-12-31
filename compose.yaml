@@ -88,7 +88,7 @@ services:
     restart: unless-stopped
     depends_on:
       - wikijs
-      - postgres-wikijs
+      - postgres
     environment:
       - TZ=${TZ_ID:-America/New_York}
       - BACKUP_CRON_EXPRESSION=${BACKUP_CRON_EXPRESSION:-0 2 * * *}
