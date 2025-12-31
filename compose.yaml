@@ -1,5 +1,4 @@
 name: tyzen9-wiki
-
 services:
 
   # *****************************************************************************
@@ -15,24 +14,27 @@ services:
   wikijs:
     image: ghcr.io/requarks/wiki:${TAG_WIKIJS:-latest}
     container_name: wikijs
+    restart: unless-stopped
     depends_on:
       - postgres
-    environment:
-      DB_TYPE: postgres
-      DB_HOST: postgres-wikijs
-      DB_PORT: 5432
-      DB_USER: ${POSTGRES_USER}
-      DB_PASS: ${POSTGRES_PASSWORD}
-      DB_NAME: ${POSTGRES_DATABASE}
-    restart: unless-stopped
-    volumes:
-      - content:/wiki/data/content
     ports:
       - "${WIKIJS_EXTERNAL_PORT}:3000"
+    environment:
+      - TZ=${TZ_ID:-America/New_York}
+      - DB_TYPE=postgres
+      - DB_HOST=postgres-wikijs
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASS=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DATABASE}
+    volumes:
+      - content:/wiki/data/content
+    # WUD Labels ----------------------------------------------------------------
     labels:
-      # What's up docker labels (https://getwud.github.io/wud/#/)
       - 'wud.tag.include=^\d+\.\d+\.\d+$$'
       - 'wud.link.template=https://github.com/requarks/wiki/releases'
+      # Offen Backup Labels -----------------------------------------------------
+      - "docker-volume-backup.stop-during-backup=${BACKUP_LABEL}"
 
   # *****************************************************************************
   # postgres
@@ -48,9 +50,10 @@ services:
     image: postgres:${TAG_POSTGRES:-latest}
     container_name: postgres-wikijs
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_DB: ${POSTGRES_DATABASE}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      - TZ=${TZ_ID:-America/New_York}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DATABASE}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     restart: always
     volumes:
       - postgres:/var/lib/postgresql/data
@@ -60,14 +63,50 @@ services:
     # -------------------------------------------------------------------------------
     # ports:
     #  - ${POSTGRES_EXTERNAL_PORT}:5432
-    labels:
-      # What's up docker labels (https://getwud.github.io/wud/#/)
-      # Show all version 17 updates
-      - 'wud.tag.include=^17(\.\d+)*$$'
-      # Show all version updates
-      # - 'wud.tag.include=^\d+\.\d+$$'
-      - 'wud.link.template=https://www.postgresql.org/docs/release/'
 
+    labels:
+      # WUD (What's Up Docker) Labels -----------------------------------------------
+      - 'wud.tag.include=^17(\.\d+)*$$' # Show all version 17 updates
+      # - 'wud.tag.include=^\d+\.\d+$$' # Show all version updates
+      - 'wud.link.template=https://www.postgresql.org/docs/release/'
+      # Offen Backup Labels ---------------------------------------------------------
+      - "docker-volume-backup.stop-during-backup=${BACKUP_LABEL}"
+
+  # *********************************************************************************
+  # volume-backup
+  #   Automated daily backup of Docker named volumes using offen/docker-volume-backup.
+  #   This lightweight service runs in the background, creates a single compressed 
+  #   archive containing all specified volumes, and automatically prunes old backups 
+  #   based on the configured retention period. It ensures data consistency by 
+  #   temporarily stopping labeled containers during the backup process. Backups 
+  #   are stored locally on the host; a separate secure process (e.g., rsync/cron) 
+  #   can be used for off-site transfer.
+  #
+  # *********************************************************************************
+  volume-backup:
+    image: offen/docker-volume-backup:${TAG_OFFEN:-latest}
+    container_name: ${BACKUP_LABEL}-backup
+    restart: unless-stopped
+    depends_on:
+      - wikijs
+      - postgres-wikijs
+    environment:
+      - TZ=${TZ_ID:-America/New_York}
+      - BACKUP_CRON_EXPRESSION=${BACKUP_CRON_EXPRESSION:-0 2 * * *}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-14}
+      - BACKUP_FILENAME=${BACKUP_LABEL}-%Y-%m-%dT%H-%M-%S.tar.gz
+      - BACKUP_STOP_DURING_BACKUP_LABEL=${BACKUP_LABEL}
+    volumes:
+      # Volumes to backup
+      - content:/backup/content:ro                     
+      - postgres:/backup/postgres:ro                   
+      # Local backup location - use a separate secure transfer process to move backups to another host
+      - ${BACKUP_LOCAL_PATH}:/archive                     
+      # Time synch with host to ensure accurate CRON scheduling
+      - /etc/localtime:/etc/localtime:ro               
+      - /etc/timezone:/etc/timezone:ro                 
+      # Allows backup container to control other containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro   
 
 volumes:
   content:
