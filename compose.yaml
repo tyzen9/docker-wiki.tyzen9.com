@@ -1,6 +1,6 @@
 services:
 
-  # *****************************************************************************
+  # *********************************************************************************
   # wikijs
   #   Wiki.js is a modern, powerful, and extensible wiki platform built on Node.js.
   #   It allows collaborative documentation, supports Markdown and rich text editing, 
@@ -9,7 +9,7 @@ services:
   #   highly customizable with themes, modules, and integrations. Typically, it uses
   #   a dedicated database service (PostgreSQL) and exposes a web port for user access.
   #
-  # *****************************************************************************
+  # *********************************************************************************
   wikijs:
     image: ghcr.io/requarks/wiki:${TAG_WIKIJS:-latest}
     container_name: wikijs
@@ -28,14 +28,14 @@ services:
       - DB_NAME=${POSTGRES_DATABASE}
     volumes:
       - content:/wiki/data/content
-    # WUD Labels ----------------------------------------------------------------
     labels:
+      # WUD - What's up docker labels (https://getwud.github.io/wud/#/) -------------
       - 'wud.tag.include=^\d+\.\d+\.\d+$$'
       - 'wud.link.template=https://github.com/requarks/wiki/releases'
-      # Offen Backup Labels -----------------------------------------------------
+      # Offen Backup Labels ---------------------------------------------------------
       - "docker-volume-backup.stop-during-backup=${BACKUP_LABEL}"
 
-  # *****************************************************************************
+  # *********************************************************************************
   # postgres
   #   PostgreSQL is a robust, open-source relational database system. For Wiki.js, 
   #   it stores all the wiki content, user data, and configuration. PostgreSQL 
@@ -44,7 +44,7 @@ services:
   #   and password, which Wiki.js will use to connect. Volumes are recommended to 
   #   persist data across container restarts or upgrades.
   #
-  # *****************************************************************************
+  # *********************************************************************************
   postgres:
     image: postgres:${TAG_POSTGRES:-latest}
     container_name: postgres-wikijs
@@ -64,7 +64,7 @@ services:
     #  - ${POSTGRES_EXTERNAL_PORT}:5432
 
     labels:
-      # WUD (What's Up Docker) Labels -----------------------------------------------
+      # WUD - What's up docker labels (https://getwud.github.io/wud/#/) -------------
       - 'wud.tag.include=^17(\.\d+)*$$' # Show all version 17 updates
       # - 'wud.tag.include=^\d+\.\d+$$' # Show all version updates
       - 'wud.link.template=https://www.postgresql.org/docs/release/'
@@ -108,7 +108,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro   
 
     labels:
-      # WUD (What's Up Docker) Labels -----------------------------------------------
+      # WUD - What's up docker labels (https://getwud.github.io/wud/#/) -------------
       # Support leading 'V'
       - 'wud.tag.include=^v\d+\.\d+\.\d+$$'
       - 'wud.link.template=https://github.com/offen/docker-volume-backup/releases'      
